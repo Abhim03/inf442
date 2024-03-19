@@ -97,12 +97,15 @@ int linear_scan(point q, int dim, point* P, int n) {
  * @return the median of the c coordinate
  */
 double compute_median(point* P, int start, int end, int c) {
-    // Exercise 3
+    double c_thvalue[end-start];
     double median = 0.0;
+    for(int i=0;i<end-start;i++){
+        c_thvalue[i]=P[i+start][c];
+    }
+    std::sort(c_thvalue, c_thvalue + end-start);
 
-    // TODO
 
-    return median;
+    return c_thvalue[(end-start)/2];
 }
 
 /*****************************************************
