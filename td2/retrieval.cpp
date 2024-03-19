@@ -120,15 +120,25 @@ double compute_median(point* P, int start, int end, int c) {
  * @param c the coordinate that we will consider the median
  * @return the index of the median value
  */
+
 int partition(point* P, int start, int end, int c) {
-    // Exercise 4
-    double m = compute_median(P, start, end, c);
-    int idx = -1;  // this is where we store the index of the median
+    // The size of the sub-array
+    int size = end - start;
 
-    // TODO
+    // Compute the index of the median value in the sub-array
+    int medianIndex = start + (size / 2);
 
-    return idx;
+    // Partially sort the elements in the sub-array around the median using nth_element
+    std::nth_element(P + start, P + medianIndex, P + end, [c](const point& a, const point& b) {
+        return a[c] < b[c];
+    });
+
+    // Now, P[medianIndex] is the element that would be in that position if the array were sorted.
+    // All elements before the median are less than or equal to it, all elements after are greater.
+
+    return medianIndex;
 }
+
 
 /*****************************************************
  * Exercise 5: create_node                           *
@@ -139,29 +149,28 @@ int partition(point* P, int start, int end, int c) {
  * @param val the value of the leaf node
  * @return a leaf node that contains val
  */
+// Function to create a leaf node
 node* create_node(int _idx) {
-  // Exercise 5
-  
-  // TODO
-    
-    // Do not forget to replace this return by a correct one!
-    return new node;
+    node* newNode = new node;
+    newNode->idx = _idx; // Store the index of the data point
+    newNode->c = -1; // -1 indicates that this is a leaf node, no split coordinate
+    newNode->m = -1; // -1 indicates that this is a leaf node, no median value
+    newNode->left = NULL; // No children for a leaf node
+    newNode->right = NULL; // No children for a leaf node
+    return newNode;
 }
 
-/**
- * Creates a internal node in the kd-tree
- *
- * @param idx the value of the leaf node
- * @return an internal node in the kd-tree that contains val
- */
-node* create_node(int _c, double _m, int _idx,
-                  node* _left, node* _right) {  
-  // Exercise 5
-  // TODO
-
-    // Do not forget to replace this return by a correct one!
-    return new node;
+// Function to create an internal node
+node* create_node(int _c, double _m, int _idx, node* _left, node* _right) {
+    node* newNode = new node;
+    newNode->c = _c; // Store the coordinate for the split
+    newNode->m = _m; // Store the split value
+    newNode->idx = _idx; // Store the index of the data point that represents the median value
+    newNode->left = _left; // Assign the left child
+    newNode->right = _right; // Assign the right child
+    return newNode;
 }
+
 
 node* build(point* P, int start, int end, int c, int dim) {
     // builds tree for sub-cloud P[start -> end-1]
@@ -206,9 +215,21 @@ node* build(point* P, int start, int end, int c, int dim) {
  * @param nnp the index of the NN of q in P
  */
 void defeatist_search(node* n, point q, int dim, point* P, double& res, int& nnp) {
-    // Exercise 6
-    // TODO
+    if (n != NULL) {
+        double current_dist = dist(q, P[n->idx], dim);
+        if (current_dist < res) {
+            res = current_dist; // Update the closest distance
+            nnp = n->idx;       // Update the index of the nearest point
+        }
+        // Decide whether to go left or right in the tree
+        if ((n->left != NULL || n->right != NULL) && (q[n->c] <= n->m)) {
+            defeatist_search(n->left, q, dim, P, res, nnp);
+        } else if (n->right != NULL) {
+            defeatist_search(n->right, q, dim, P, res, nnp);
+        }
+    }
 }
+
 
 /*****************************************************
  * Exercise 7: backtracking_search                   *
@@ -224,7 +245,25 @@ void defeatist_search(node* n, point q, int dim, point* P, double& res, int& nnp
  * @param nnp the index of the NN of q in P
  */
 void backtracking_search(node* n, point q, int dim, point* P, double& res, int& nnp) {
-    // Exercise 7
-    // TODO
+    if (n != NULL) {
+        double current_dist = dist(q, P[n->idx], dim);
+        if (current_dist < res) {
+            res = current_dist; // Update the closest distance
+            nnp = n->idx;      // Update the index of the nearest point
+        }
+        
+        node* first_search = (q[n->c] <= n->m) ? n->left : n->right;
+        node* second_search = (q[n->c] <= n->m) ? n->right : n->left;
+
+        if (first_search != NULL) {
+            backtracking_search(first_search, q, dim, P, res, nnp);
+        }
+        
+        // Only search the other side if there's a chance of finding a closer point
+        if (second_search != NULL && ((q[n->c] <= n->m && q[n->c] + res > n->m) || (q[n->c] > n->m && q[n->c] - res <= n->m))) {
+            backtracking_search(second_search, q, dim, P, res, nnp);
+        }
+    }
 }
+
 
