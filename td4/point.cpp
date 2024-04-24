@@ -36,12 +36,15 @@ double point::dist(const point &q) const {
 int point::d = 0;
 
 bool point::set_dim(int _d) {
-    assert (_d > 0);
-    // TODO: Exercise 1
-    return true;
+    if(d==0){
+        d=_d;
+        return true;
+    } else{
+        return false;
+    }
+    
 }
 
 int point::get_dim() {
-    // TODO: Exercise 1
-    return 0;
+    return d;
 }
